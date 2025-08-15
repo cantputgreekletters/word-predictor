@@ -15,6 +15,9 @@ D = {
     }
 }
 """
+
+from random import randint as rn
+
 _SingleWords = "SingleWords"
 _ComboWords = "ComboWords"
 _Tots = "__Total__"
@@ -59,10 +62,21 @@ def _SplitWords(text : str) -> list[str]:
     Words = list(map(_my_filter, Words))
     return Words
 
-def GetText() -> str:
-    with open(_TheRaven_path, "r", encoding="utf-8") as f:
-        contents : str = f.read()
-    return contents
+def _ChosenIndex(probs : list[float]) -> int:
+    L = len(probs)
+    selected_index : int = 0
+    if(L == 1):
+        selected_index = 0
+    elif(L <= 3):
+        selected_index = probs.index(max(probs))
+    else:
+        canditates : list[int] = []
+        _sorted : list[float] = sorted(probs, reverse = True)
+        for i in range(int(L/2) + 1):
+            canditates.append(probs.index(_sorted[i]))
+        selected_index = canditates[rn(0, len(canditates) - 1)]
+    #TODO add some randomness
+    return selected_index
 
 def GetProbabilitiesDict(words : str) -> dict:
     Words : list[str] = _SplitWords(words)
@@ -98,11 +112,4 @@ def Predict(word1 : str, word2 : str, D : dict[dict[dict]]) -> str:
     probs : list[float] = []
     for word in shared_words:
         probs.append(D[word2][word] * D[word1 + word2][word])
-    return shared_words[probs.index(max(probs))]
-
-if __name__ == "__main__":
-    from pprint import pprint
-    text = GetText()
-    D = GetProbabilitiesDict(text)
-    re = Predict("the", "raven", D)
-    print(f"Result is = {re}")
+    return shared_words[_ChosenIndex(probs)]
